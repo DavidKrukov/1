@@ -1,0 +1,26 @@
+#include <iostream>
+#include <string>
+#include <curl/curl.h>
+
+using namespace std;
+
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* data) {
+    data->append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
+
+int main() {
+    CURL* curl;
+    string html;
+
+    curl = curl_easy_init();
+    
+    curl_easy_setopt(curl, CURLOPT_URL, "https://https://chatgpt.com/c/69b465aa-16e0-8326-af95-3192e4d89766");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &html);
+
+    curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+
+    cout << html << endl;
+}
