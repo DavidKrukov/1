@@ -1,0 +1,89 @@
+#include <iostream>
+#include <cmath>
+#include <windows.h>
+
+using namespace std;
+
+int main() {
+
+    float A = 0, B = 0;
+
+    const int width = 120;
+    const int height = 40;
+
+    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    while(true) {
+
+        char screen[4800];
+        float zbuffer[4800];
+        int color[5800];
+
+        for(int i = 0; i < width*height; i++) {
+            screen[i] = ' ';
+            zbuffer[i] = 0;
+            color[i] = 7; // стандартный белый цвет
+        }
+
+        for(float theta = 0; theta < 6.28; theta += 0.03) {
+            for(float phi = 0; phi < 6.28; phi += 0.01) {
+
+                float sinA = sin(A), cosA = cos(A);
+                float sinB = sin(B), cosB = cos(B);
+
+                float sintheta = sin(theta), costheta = cos(theta);
+                float sinphi = sin(phi), cosphi = cos(phi);
+
+                float circlex = 2 + costheta;
+                float circley = sintheta;
+
+                float x = circlex*(cosB*cosphi + sinA*sinB*sinphi) - circley*cosA*sinB;
+                float y = circlex*(sinB*cosphi - sinA*cosB*sinphi) + circley*cosA*cosB;
+                float z = cosA*circlex*sinphi + circley*sinA + 5;
+
+                float ooz = 1/z;
+
+                int xp = (int)(width/2 + 45*ooz*x);
+                int yp = (int)(height/2 + 22*ooz*y);
+
+                int idx = xp + width*yp;
+
+                float L = cosphi*costheta*sinB
+                        - cosA*costheta*sinphi
+                        - sinA*sintheta
+                        + cosB*(cosA*sintheta - costheta*sinA*sinphi);
+
+                if(yp>=0 && yp<height && xp>=0 && xp<width && ooz > zbuffer[idx]) {
+
+                    zbuffer[idx] = ooz;
+
+                    const char *chars = ".,-~:;=!*#$@";
+                    int lum = (int)(L*8);
+
+                    if(lum < 0) lum = 0;
+                    if(lum > 11) lum = 11;
+
+                    screen[idx] = chars[lum];
+
+                    // Цвет по яркости: от синего к красному
+                    color[idx] = 1 + lum % 15;
+                }
+            }
+        }
+
+        COORD pos = {0,0};
+        SetConsoleCursorPosition(console, pos);
+
+        for(int i = 0; i < width*height; i++) {
+            SetConsoleTextAttribute(console, color[i]);
+            cout << screen[i];
+            if(i % width == width-1) cout << "\n";
+        }
+
+        // Ускоренная анимация для FPS ~200
+        A += 0.30;
+        B += 0.20;
+
+        Sleep(5);
+    }
+}
